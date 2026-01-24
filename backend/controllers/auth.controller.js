@@ -6,6 +6,10 @@ export const signup = async (req, res) => {
   try {
     const { fullName, username, email, password } = req.body;
 
+     if (!fullName || !username || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
@@ -51,7 +55,7 @@ export const signup = async (req, res) => {
         coverImg: newUser.coverImg,
       });
     } else {
-      res.status(400).json({ erroe: "Invalid user data" });
+      res.status(400).json({ error: "Invalid user data" });
     }
   } catch (error) {
     console.log("Error in signup controller", error.message);
