@@ -53,7 +53,7 @@ export const deletePost = async (req, res) => {
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
     console.log("Error in deletePost controller : ", error);
-    res.status(500).jon({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -94,16 +94,24 @@ export const likeUnlikePost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
-    const userLinkedPost = post.likes.includes(userId);
+    const userLikedPost = post.likes.includes(userId);
 
-    if (userLinkedPost) {
+    if (userLikedPost) {
+      // Unlike post
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-      res.status(200).json({ message: "Post unliked successfully" });
+
+      // Return updated likes array
+      const updatedLikes = post.likes.filter(
+        (id) => id.toString() !== userId.toString(),
+      );
+      res.status(200).json(updatedLikes);
     } else {
+      // Like post
       post.likes.push(userId);
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
+
       const notification = new Notification({
         from: userId,
         to: post.user,
@@ -111,7 +119,8 @@ export const likeUnlikePost = async (req, res) => {
       });
       await notification.save();
 
-      res.status(200).json({ message: "Post liked successfully" });
+      // Return updated likes array
+      res.status(200).json(post.likes);
     }
   } catch (error) {
     console.log("Error in likeUnlikePost controller : ", error);
